@@ -79,6 +79,7 @@ bool CServiceManager::InitForTesting()
     CLog::Log(LOGFATAL, "CServiceManager::{}: Unable to start CAddonMgr", __FUNCTION__);
     return false;
   }
+  m_dataCacheCore = std::make_unique<CDataCacheCore>();
 
   m_extsMimeSupportList = std::make_unique<ADDONS::CExtsMimeSupportList>(*m_addonMgr);
   m_fileExtensionProvider = std::make_unique<CFileExtensionProvider>(*m_addonMgr);
@@ -96,6 +97,7 @@ void CServiceManager::DeinitTesting()
   m_subTagRegistryManager.reset();
   m_fileExtensionProvider.reset();
   m_extsMimeSupportList.reset();
+  m_dataCacheCore.reset();
   m_binaryAddonManager.reset();
   m_addonMgr.reset();
   m_databaseManager.reset();
@@ -218,7 +220,8 @@ bool CServiceManager::InitStageThree(const std::shared_ptr<CProfileManager>& pro
 
   m_gameServices = std::make_unique<GAME::CGameServices>(
       *m_gameControllerManager, *m_gameRenderManager, *m_peripherals, *profileManager,
-      *m_inputManager, *m_addonMgr);
+      *m_inputManager, *m_addonMgr, *m_fileExtensionProvider);
+  m_gameServices->Initialize();
 
   m_contextMenuManager->Init();
 
@@ -248,6 +251,7 @@ void CServiceManager::DeinitStageThree()
   m_playerCoreFactory.reset();
   m_PVRManager->Deinit();
   m_contextMenuManager->Deinit();
+  m_gameServices->Deinitialize();
   m_gameServices.reset();
   m_peripherals->Clear();
 
